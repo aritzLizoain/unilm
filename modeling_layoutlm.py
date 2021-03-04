@@ -65,7 +65,7 @@ class LayoutLMEmbeddings(nn.Module):
         self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-        self.top_position_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.top_position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -115,11 +115,13 @@ class LayoutLMEmbeddings(nn.Module):
         
         # My custom embedding: is the token on the upper part of the document?  
         relative_position_embeddings = h_position_embeddings / 2048 # image height is 2048 pixels
-        if relative_position_embeddings > 0.6:
-            top_position_embeddings = 1
-            print('It is on top, the position is {}, and the relative position is {}'.format(h_position_embeddings, relative_position_embeddings))
+        print('h position embedding is: {}'.format(h_position_embeddings))
+        print('relative position embedding is: {}'.format(relative_position_embeddings))
+        if relative_position_embeddings < 0.4: # pixel 0 is the top while pixel 2048 is the bottom of the document
+            top_position_embeddings = 1 # it is on the upper part
+            print('The token with id {} is on top, the position is {}, and the relative position is {}'.format(input_ids, h_position_embeddings, relative_position_embeddings))
         else:
-            top_position_embeddings = 0
+            top_position_embeddings = 0 # it is on the bottom part
         
         embeddings = (
             words_embeddings
