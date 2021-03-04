@@ -65,6 +65,7 @@ class LayoutLMEmbeddings(nn.Module):
         self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.top_position_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -111,7 +112,15 @@ class LayoutLMEmbeddings(nn.Module):
         h_position_embeddings = self.h_position_embeddings(bbox[:, :, 3] - bbox[:, :, 1])
         w_position_embeddings = self.w_position_embeddings(bbox[:, :, 2] - bbox[:, :, 0])
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
-
+        
+        # My custom embedding: is the token on the upper part of the document?  
+        relative_position_embeddings = h_position_embeddings / 2048 # image height is 2048 pixels
+        if relative_position_embeddings > 0.6:
+            top_position_embeddings = 1
+            print('It is on top, the position is {}, and the relative position is {}'.format(h_position_embeddings, relative_position_embeddings))
+        else:
+            top_position_embeddings = 0
+        
         embeddings = (
             words_embeddings
             + position_embeddings
@@ -122,7 +131,7 @@ class LayoutLMEmbeddings(nn.Module):
             + h_position_embeddings
             + w_position_embeddings
             + token_type_embeddings
-            # new_position_embeddings
+            + top_position_embeddings
         )
 
         # print('Embeddings used: {}'.format(embeddings))
