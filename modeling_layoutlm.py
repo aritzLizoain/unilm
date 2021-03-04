@@ -113,22 +113,22 @@ class LayoutLMEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
         embeddings = (
-            # words_embeddings
-            # + position_embeddings
-            # + left_position_embeddings
-            # + upper_position_embeddings
-            # + right_position_embeddings
-            # + lower_position_embeddings
-            # + h_position_embeddings
-            # + w_position_embeddings
-            # + token_type_embeddings
-            new_position_embeddings
+            words_embeddings
+            + position_embeddings
+            + left_position_embeddings
+            + upper_position_embeddings
+            + right_position_embeddings
+            + lower_position_embeddings
+            + h_position_embeddings
+            + w_position_embeddings
+            + token_type_embeddings
+            # new_position_embeddings
         )
 
-        print('Embeddings used: {}'.format(embeddings))
+        # print('Embeddings used: {}'.format(embeddings))
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
-        print('Embeddings used 2: {}'.format(embeddings))
+        # print('Embeddings used 2: {}'.format(embeddings))
         return embeddings
 
 
