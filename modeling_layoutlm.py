@@ -65,7 +65,7 @@ class LayoutLMEmbeddings(nn.Module):
         self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-        self.top_position_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.custom_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -105,23 +105,24 @@ class LayoutLMEmbeddings(nn.Module):
             upper_position_embeddings = self.y_position_embeddings(bbox[:, :, 1])
             right_position_embeddings = self.x_position_embeddings(bbox[:, :, 2])
             lower_position_embeddings = self.y_position_embeddings(bbox[:, :, 3])
-            new_position_embeddings = lower_position_embeddings + upper_position_embeddings - right_position_embeddings
         except IndexError as e:
             raise IndexError("The :obj:`bbox`coordinate values should be within 0-1000 range.") from e
+            
+        print('Left position embeddings: {}'.format(left_position_embeddings))
+        print('Left position embeddings shape: {}'.format(left_position_embeddings.shape))
+        
+        print('Bbox: {}'.format(bbox))
+        print('The :obj:`bbox`coordinate values should be within 0-1000 range.')
+        print('Bbox shape: {}'.format(bbox.shape))
 
         h_position_embeddings = self.h_position_embeddings(bbox[:, :, 3] - bbox[:, :, 1])
         w_position_embeddings = self.w_position_embeddings(bbox[:, :, 2] - bbox[:, :, 0])
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         
-        # My custom embedding: is the token on the upper part of the document?  
-        relative_position_embeddings = h_position_embeddings / 2048 # image height is 2048 pixels
-        print('h position embedding is: {}'.format(h_position_embeddings))
-        print('relative position embedding is: {}'.format(relative_position_embeddings))
-        if relative_position_embeddings < 0.4: # pixel 0 is the top while pixel 2048 is the bottom of the document
-            top_position_embeddings = 1 # it is on the upper part
-            print('The token with id {} is on top, the position is {}, and the relative position is {}'.format(input_ids, h_position_embeddings, relative_position_embeddings))
-        else:
-            top_position_embeddings = 0 # it is on the bottom part
+        # My custom embedding:
+        custom_embeddings = left_position_embeddings * 1000
+        print('Custom embedding: {}'.format(custom_embeddings))
+        print('Custom embedding shape: {}'.format(custom_embeddings.shape))
         
         embeddings = (
             words_embeddings
@@ -133,13 +134,11 @@ class LayoutLMEmbeddings(nn.Module):
             + h_position_embeddings
             + w_position_embeddings
             + token_type_embeddings
-            + top_position_embeddings
+            + custom_embeddings
         )
 
-        # print('Embeddings used: {}'.format(embeddings))
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
-        # print('Embeddings used 2: {}'.format(embeddings))
         return embeddings
 
 
