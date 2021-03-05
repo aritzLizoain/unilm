@@ -65,7 +65,6 @@ class LayoutLMEmbeddings(nn.Module):
         self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-        self.custom_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
