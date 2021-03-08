@@ -122,11 +122,11 @@ class LayoutLMEmbeddings(nn.Module):
                     top_or_bottom[i,j] = 1
                 else:
                     top_or_bottom[i,j] = 0                    
-        print('Top or bottom: {}'.format(top_or_bottom))
-        print('Top or bottom shape: {}'.format(top_or_bottom.shape))
+        # print('Top or bottom: {}'.format(top_or_bottom))
+        # print('Top or bottom shape: {}'.format(top_or_bottom.shape))
         custom_embeddings = self.top_position_embeddings(top_or_bottom) # top_or_bottom.shape = [2, 512]. custom_embeddings.shape = [2, 512, 1024]
-        print('Custom embedding: {}'.format(custom_embeddings))
-        print('Custom embedding shape: {}'.format(custom_embeddings.shape))
+        # print('Custom embedding: {}'.format(custom_embeddings))
+        # print('Custom embedding shape: {}'.format(custom_embeddings.shape))
         
         embeddings = (
             words_embeddings
