@@ -114,19 +114,21 @@ class LayoutLMEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         
         # My custom embedding: whether a token is on the upper part (top 40%) of the document or not
-        top_or_bottom = torch.clone(bbox[:,:,2]) # bbox[:,:,2] contains the y coordinate of the upper left corner. 
-        # Remember that the image height is normalized to 1000. It will take value 1 if it is on the top 40% and 0 if it is not
-        for i in range(top_or_bottom.shape[0]): 
-            for j in range(top_or_bottom.shape[1]):
-                if top_or_bottom[i,j] < 400: 
-                    top_or_bottom[i,j] = 1
+        top_or_bottom = torch.clone(bbox[:,:,2]) # bbox[:,:,2] contains the y coordinate of the upper left corner.
+        top_or_bottom_list = top_or_bottom.tolist() # Convert the tensor to a list in order to add lists to the embedding (e.g. [top, page_number]). Then convert it back to a tensor.
+        for i in range(len(top_or_bottom_list)): 
+            for j in range(len(top_or_bottom_list[0])):
+                if top_or_bottom[i][j] < 400: # Remember that the image height is normalized to 1000.
+                # It will take value 1 if it is on the top 40% and 0 if it is not. The page number info will be 0 for now.
+                    top_or_bottom[i][j] = [1, 0] 
                 else:
-                    top_or_bottom[i,j] = 0                    
-        # print('Top or bottom: {}'.format(top_or_bottom))
-        # print('Top or bottom shape: {}'.format(top_or_bottom.shape))
+                    top_or_bottom[i][j] = [0, 0] 
+        top_or_bottom = torch.LongTensor(top_or_bottom_list) # Convert it back to a tensor                   
+        print('Top or bottom: {}'.format(top_or_bottom))
+        print('Top or bottom shape: {}'.format(top_or_bottom.shape))
         custom_embeddings = self.top_position_embeddings(top_or_bottom) # top_or_bottom.shape = [2, 512]. custom_embeddings.shape = [2, 512, 1024]
-        # print('Custom embedding: {}'.format(custom_embeddings))
-        # print('Custom embedding shape: {}'.format(custom_embeddings.shape))
+        print('Custom embedding: {}'.format(custom_embeddings))
+        print('Custom embedding shape: {}'.format(custom_embeddings.shape))
         
         embeddings = (
             words_embeddings
