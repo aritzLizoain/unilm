@@ -65,6 +65,8 @@ class LayoutLMEmbeddings(nn.Module):
         self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        # Custom embedding
+        self.top_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -106,20 +108,22 @@ class LayoutLMEmbeddings(nn.Module):
             lower_position_embeddings = self.y_position_embeddings(bbox[:, :, 3])
         except IndexError as e:
             raise IndexError("The :obj:`bbox`coordinate values should be within 0-1000 range.") from e
-            
-        print('Left position embeddings: {}'.format(left_position_embeddings))
-        print('Left position embeddings shape: {}'.format(left_position_embeddings.shape))
-        
-        print('Bbox: {}'.format(bbox))
-        print('The :obj:`bbox`coordinate values should be within 0-1000 range.')
-        print('Bbox shape: {}'.format(bbox.shape))
-
+                    
         h_position_embeddings = self.h_position_embeddings(bbox[:, :, 3] - bbox[:, :, 1])
         w_position_embeddings = self.w_position_embeddings(bbox[:, :, 2] - bbox[:, :, 0])
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         
-        # My custom embedding:
-        custom_embeddings = left_position_embeddings * 1000
+        # My custom embedding: whether a token is on the upper part (top 40%) of the document or not
+        top_or_bottom = new_empty([2, 512]) # empty tensor that will take value 1 if it is on the top 40% and 0 if it is not
+        for i in range(bbox[:,:,2].shape[0]): 
+            for j in range(bbox[:,:,2].shape[1]):
+                if bbox[i,j,2] < 400: # bbox[:,:,2] contains the y coordinate of the upper left corner. the image height is normalized to 1000
+                    top_or_bottom[i,j] = 1
+                else:
+                    top_or_bottom[i,j] = 0                    
+        print('Top or bottom: {}'.format(top_or_bottom))
+        print('Custom or bottom shape: {}'.format(top_or_bottom.shape))
+        custom_embeddings = self.top_position_embeddings(top_or_bottom) # top_or_bottom.shape = [2, 512]. custom_embeddings.shape = [2, 512, 1024]
         print('Custom embedding: {}'.format(custom_embeddings))
         print('Custom embedding shape: {}'.format(custom_embeddings.shape))
         
