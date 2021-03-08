@@ -114,10 +114,10 @@ class LayoutLMEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         
         # My custom embedding: whether a token is on the upper part (top 40%) of the document or not
-        top_or_bottom = new_empty([2, 512]) # empty tensor that will take value 1 if it is on the top 40% and 0 if it is not
-        for i in range(bbox[:,:,2].shape[0]): 
-            for j in range(bbox[:,:,2].shape[1]):
-                if bbox[i,j,2] < 400: # bbox[:,:,2] contains the y coordinate of the upper left corner. the image height is normalized to 1000
+        top_or_bottom = torch.clone(bbox[:,:,2]) # will take value 1 if it is on the top 40% and 0 if it is not
+        for i in range(top_or_bottom.shape[0]): 
+            for j in range(top_or_bottom.shape[1]):
+                if bbox[i,j,2] < 400: # bbox[:,:,2] contains the y coordinate of the upper left corner. Remember that the image height is normalized to 1000
                     top_or_bottom[i,j] = 1
                 else:
                     top_or_bottom[i,j] = 0                    
