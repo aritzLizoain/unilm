@@ -139,7 +139,7 @@ class LayoutLMEmbeddings(nn.Module):
             + lower_position_embeddings
             + h_position_embeddings
             + w_position_embeddings
-            # + token_type_embeddings
+            + token_type_embeddings
             # + custom_embeddings
         )
 
