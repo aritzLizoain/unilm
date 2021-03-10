@@ -66,7 +66,7 @@ class LayoutLMEmbeddings(nn.Module):
         self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
         # Custom embedding
-        self.top_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
+        # self.top_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
 
         self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -114,21 +114,21 @@ class LayoutLMEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
         
         # My custom embedding: whether a token is on the upper part (top 40%) of the document or not
-        top_or_bottom = torch.clone(bbox[:,:,2]) # bbox[:,:,2] contains the y coordinate of the upper left corner.
-        top_or_bottom_list = top_or_bottom.tolist() # Convert the tensor to a list in order to add lists to the embedding (e.g. [top, page_number]). Then convert it back to a tensor.
-        for i in range(len(top_or_bottom_list)): 
-            for j in range(len(top_or_bottom_list[0])):
-                if top_or_bottom_list[i][j] < 400: # Remember that the image height is normalized to 1000.
-                # It will take value 1 if it is on the top 40% and 0 if it is not. The page number info will be 0 for now.
-                    top_or_bottom_list[i][j] = [1, 0] 
-                else:
-                    top_or_bottom_list[i][j] = [0, 0] 
-        top_or_bottom = torch.tensor(top_or_bottom_list, device='cuda:0', dtype=torch.long) # Convert it back to a tensor                   
-        print('Top or bottom: {}'.format(top_or_bottom))
-        print('Top or bottom shape: {}'.format(top_or_bottom.shape))
-        custom_embeddings = self.top_position_embeddings(top_or_bottom) # top_or_bottom.shape = [2, 512]. custom_embeddings.shape = [2, 512, 1024]
-        print('Custom embedding: {}'.format(custom_embeddings))
-        print('Custom embedding shape: {}'.format(custom_embeddings.shape))
+        # top_or_bottom = torch.clone(bbox[:,:,2]) # bbox[:,:,2] contains the y coordinate of the upper left corner.
+        # top_or_bottom_list = top_or_bottom.tolist() # Convert the tensor to a list in order to add lists to the embedding (e.g. [top, page_number]). Then convert it back to a tensor.
+        # for i in range(len(top_or_bottom_list)): 
+        #     for j in range(len(top_or_bottom_list[0])):
+        #         if top_or_bottom_list[i][j] < 400: # Remember that the image height is normalized to 1000.
+        #         # It will take value 1 if it is on the top 40% and 0 if it is not. The page number info will be 0 for now.
+        #             top_or_bottom_list[i][j] = [1, 0] 
+        #         else:
+        #             top_or_bottom_list[i][j] = [0, 0] 
+        # top_or_bottom = torch.tensor(top_or_bottom_list, device='cuda:0', dtype=torch.long) # Convert it back to a tensor                   
+        # print('Top or bottom: {}'.format(top_or_bottom))
+        # print('Top or bottom shape: {}'.format(top_or_bottom.shape))
+        # custom_embeddings = self.top_position_embeddings(top_or_bottom) # top_or_bottom.shape = [2, 512]. custom_embeddings.shape = [2, 512, 1024]
+        # print('Custom embedding: {}'.format(custom_embeddings))
+        # print('Custom embedding shape: {}'.format(custom_embeddings.shape))
         
         embeddings = (
             words_embeddings
@@ -139,8 +139,8 @@ class LayoutLMEmbeddings(nn.Module):
             + lower_position_embeddings
             + h_position_embeddings
             + w_position_embeddings
-            + token_type_embeddings
-            + custom_embeddings
+            # + token_type_embeddings
+            # + custom_embeddings
         )
 
         embeddings = self.LayerNorm(embeddings)
